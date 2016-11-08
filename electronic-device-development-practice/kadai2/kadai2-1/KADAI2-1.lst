@@ -1,0 +1,448 @@
+[00F0] :                HALTMR	EQU	0F0H
+[00F1] :                HALTMCR	EQU	0F1H
+                        ;
+[0010] :                CTC0	EQU	10H
+[0011] :                CTC1	EQU	11H
+                        ;
+[001C] :                PAD	EQU	1CH
+[001D] :                PAC	EQU	1DH
+[001E] :                PBD	EQU	1EH
+[001F] :                PBC	EQU	1FH
+                        ;
+[0030] :                PPA0	EQU	30H
+[0031] :                PPB0	EQU	31H
+[0032] :                PPC0	EQU	32H
+[0033] :                PPR0	EQU	33H
+                        ;
+[0034] :                PPA1	EQU	34H
+[0035] :                PPB1	EQU	35H
+[0036] :                PPC1	EQU	36H
+[0037] :                PPR1	EQU	37H
+                        ;
+[9100] :                LINE1	EQU	9100H
+[9102] :                LINE2	EQU	9102H
+                        ;
+[8000] :                	ORG	8000H
+                        ;--------------------------------------
+                        ; Initialize
+                        ;--------------------------------------
+[8000] : 31 00 00       	LD	SP,00H
+[8003] : F3             	DI
+                        ;----------------------------
+[8004] : CD CB 80       	CALL	WDTINI
+[8007] : CD D8 80       	CALL	CPUINI
+[800A] : CD DF 80       	CALL	CTCINI
+[800D] : CD F4 80       	CALL	PIOINI
+[8010] : CD 05 81       	CALL	PPIINI
+                        ;----------------------------
+[8013] : 3E 00          	LD	A,00H
+[8015] : D3 1C          	OUT	(PAD),A
+[8017] : D3 1E          	OUT	(PBD),A
+[8019] : D3 31          	OUT	(PPB0),A
+                        ;----------------------------
+[801B] : 21 7A 81       	LD	HL,LCD1
+[801E] : 22 00 91       	LD	(LINE1),HL
+[8021] : 21 2A 82       	LD	HL,LCD2
+[8024] : 22 02 91       	LD	(LINE2),HL
+                        ;----------------------------
+[8027] : CD 0C 81       	CALL	IVSET
+                        ;----------------------------
+[802A] : CD BC 80       	CALL	LWAIT
+[802D] : CD BC 80       	CALL	LWAIT
+[8030] : CD BC 80       	CALL	LWAIT
+                        ;----------------------------
+[8033] : CD 1B 81       	CALL	SETLCD
+                        ;----------------------------
+[8036] : 06 05          	LD	B,5
+[8038] : CD BC 80       SLEEP:	CALL	LWAIT
+[803B] : 10 FB          	DJNZ	SLEEP
+                        ;--------------------------------------
+                        ; Main routine
+                        ;--------------------------------------
+[803D] : 16 00          LOOP:	LD	D,00H
+[803F] : 1E 00          	LD	E,00H
+                        ;----------------------------
+[8041] : 3E 01          	LD	A,01H
+[8043] : D3 35          	OUT	(PPB1),A
+                        ;----------------------------
+[8045] : FB             	EI
+[8046] : 30 FE          	JR	NC,$
+[8048] : F3             	DI
+                        ;----------------------------
+[8049] : 3E 00          	LD	A,00H
+[804B] : BA             	CP	D
+[804C] : CA 3D 80       	JP	Z,LOOP
+                        ;----------------------------
+[804F] : 3E 00          	LD	A,00H
+[8051] : D3 35          	OUT	(PPB1),A
+                        ;----------------------------
+[8053] : CD 1B 81       	CALL	SETLCD
+                        ;----------------------------
+[8056] : CD 5C 81       	CALL	CURSOR
+                        ;----------------------------
+                        ; Compare Counter
+                        ;----------------------------
+[8059] : 3E 0A          	LD	A,10
+[805B] : 06 0B          	LD	B,11
+[805D] : 1E 0A          	LD	E,10
+[805F] : 21 7A 81       	LD	HL,LCD1
+[8062] : CD 36 81       	CALL	HAN
+[8065] : 22 00 91       	LD	(LINE1),HL
+                        ;----------------------------
+[8068] : 3E 04          	LD	A,4
+[806A] : 06 1A          	LD	B,26
+[806C] : 1E 05          	LD	E,5
+[806E] : 21 2A 82       	LD	HL,LCD2
+[8071] : CD 36 81       	CALL	HAN
+[8074] : 22 02 91       	LD	(LINE2),HL
+                        ;--------------------------------------
+                        ; Show Message
+                        ;--------------------------------------
+[8077] : 2A 00 91       	LD	HL,(LINE1)
+[807A] : CD 44 81       	CALL	MSG
+                        ;----------------------------
+[807D] : CD 99 80       	CALL	R000
+[8080] : CD 9E 80       	CALL	R001
+[8083] : 3E C0          	LD	A,0C0H
+[8085] : D3 1C          	OUT	(PAD),A
+[8087] : CD AD 80       	CALL	WAIT
+[808A] : CD 99 80       	CALL	R000
+                        ;----------------------------
+[808D] : 2A 02 91       	LD	HL,(LINE2)
+[8090] : CD 44 81       	CALL	MSG
+                        ;----------------------------
+[8093] : CD 5C 81       	CALL	CURSOR
+                        ;----------------------------
+[8096] : C3 3D 80       	JP	LOOP
+                        ;--------------------------------------
+                        ; Sub routines
+                        ;--------------------------------------
+                        ;
+                        ;----------------------------
+                        ; LCD timing routine
+                        ;----------------------------
+[8099] : 3E 00          R000:	LD	A,00H
+[809B] : D3 1E          	OUT	(PBD),A
+[809D] : C9             	RET
+                        ;
+[809E] : 3E 04          R001:	LD	A,04H
+[80A0] : D3 1E          	OUT	(PBD),A
+[80A2] : C9             	RET
+                        ;
+[80A3] : 3E 01          R010:	LD	A,01H
+[80A5] : D3 1E          	OUT	(PBD),A
+[80A7] : C9             	RET
+                        ;
+[80A8] : 3E 05          R011:	LD	A,05H
+[80AA] : D3 1E          	OUT	(PBD),A
+[80AC] : C9             	RET
+                        ;----------------------------
+                        ; Wait
+                        ;----------------------------
+[80AD] : C5             WAIT:	PUSH	BC
+[80AE] : 0E 08          	LD	C,08H
+[80B0] : 06 FF          W2:	LD	B,0FFH
+[80B2] : 05             W3:	DEC	B
+[80B3] : C2 B2 80       	JP	NZ,W3
+[80B6] : 0D             	DEC	C
+[80B7] : C2 B0 80       	JP	NZ,W2
+[80BA] : C1             	POP	BC
+[80BB] : C9             	RET
+                        ;----------------------------
+                        ; Long Wait
+                        ;----------------------------
+[80BC] : C5             LWAIT:	PUSH	BC
+[80BD] : 0E 00          	LD	C,00H
+[80BF] : 06 00          LW2:	LD	B,00H
+[80C1] : 05             LW3:	DEC	B
+[80C2] : C2 C1 80       	JP	NZ,LW3
+[80C5] : 0D             	DEC	C
+[80C6] : C2 BF 80       	JP	NZ,LW2
+[80C9] : C1             	POP	BC
+[80CA] : C9             	RET
+                        ;----------------------------
+                        ; Initialize WDT
+                        ;----------------------------
+[80CB] : 3E DB          WDTINI:	LD	A,0DBH
+[80CD] : D3 F1          	OUT	(HALTMCR),A
+[80CF] : 3E 7B          	LD	A,7BH
+[80D1] : D3 F0          	OUT	(HALTMR),A
+[80D3] : 3E B1          	LD	A,0B1H
+[80D5] : D3 F1          	OUT	(HALTMCR),A
+[80D7] : C9             	RET
+                        ;----------------------------
+                        ; Initialize CPU
+                        ;----------------------------
+[80D8] : ED 5E          CPUINI:	IM	2
+[80DA] : 3E 90          	LD	A,90H
+[80DC] : ED 47          	LD	I,A
+[80DE] : C9             	RET
+                        ;----------------------------
+                        ; Initialize CTC
+                        ;----------------------------
+[80DF] : 3E 00          CTCINI:	LD	A,00H
+[80E1] : D3 10          	OUT	(CTC0),A
+[80E3] : 3E C5          	LD	A,0C5H
+[80E5] : D3 10          	OUT	(CTC0),A
+[80E7] : 3E 05          	LD	A,5
+[80E9] : D3 10          	OUT	(CTC0),A
+[80EB] : 3E 85          	LD	A,85H
+[80ED] : D3 11          	OUT	(CTC1),A
+[80EF] : 3E B1          	LD	A,0B1H
+[80F1] : D3 11          	OUT	(CTC1),A
+[80F3] : C9             	RET
+                        ;----------------------------
+                        ; Initialize PIO
+                        ;----------------------------
+[80F4] : 3E CF          PIOINI:	LD	A,0CFH
+[80F6] : D3 1D          	OUT	(PAC),A
+[80F8] : 3E 00          	LD	A,00H
+[80FA] : D3 1D          	OUT	(PAC),A
+[80FC] : 3E CF          	LD	A,0CFH
+[80FE] : D3 1F          	OUT	(PBC),A
+[8100] : 3E 00          	LD	A,00H
+[8102] : D3 1F          	OUT	(PBC),A
+[8104] : C9             	RET
+                        ;----------------------------
+                        ; Initialize PPI
+                        ;----------------------------
+[8105] : 3E 80          PPIINI:	LD	A,80H
+[8107] : D3 33          	OUT	(PPR0),A
+[8109] : D3 37          	OUT	(PPR1),A
+[810B] : C9             	RET
+                        ;----------------------------
+                        ; Write VectorTable
+                        ;----------------------------
+[810C] : 01 6D 81       IVSET:	LD	BC,INT0
+[810F] : ED 43 00 90    	LD	(9000H),BC
+[8113] : 01 71 81       	LD	BC,INT1
+[8116] : ED 43 02 90    	LD	(9002H),BC
+[811A] : C9             	RET
+                        ;----------------------------
+                        ; Initialize LCD
+                        ;----------------------------
+[811B] : 21 77 81       SETLCD:	LD	HL,LCDINI
+[811E] : 06 03          	LD	B,03H
+[8120] : CD 99 80       	CALL	R000
+[8123] : CD AD 80       	CALL	WAIT
+[8126] : CD 9E 80       L1:	CALL	R001
+[8129] : 7E             	LD	A,(HL)
+[812A] : D3 1C          	OUT	(PAD),A
+[812C] : CD AD 80       	CALL	WAIT
+[812F] : CD 99 80       	CALL	R000
+[8132] : 23             	INC	HL
+[8133] : 10 F1          	DJNZ	L1
+[8135] : C9             	RET
+                        ;----------------------------
+                        ; Compare Counter
+                        ;----------------------------
+[8136] : BA             HAN:	CP	D
+[8137] : F2 43 81       	JP	P,HAN0
+[813A] : 83             	ADD	A,E
+[813B] : C5             	PUSH	BC
+[813C] : 01 10 00       	LD	BC,16
+[813F] : 09             	ADD	HL,BC
+[8140] : C1             	POP	BC
+[8141] : 10 F3          	DJNZ	HAN
+[8143] : C9             HAN0:	RET
+                        ;----------------------------
+                        ; Write Message
+                        ;----------------------------
+[8144] : 06 10          MSG:	LD	B,16
+[8146] : CD 99 80       	CALL	R000
+[8149] : CD AD 80       	CALL	WAIT
+[814C] : CD A8 80       WRITE:	CALL	R011
+[814F] : 7E             	LD	A,(HL)
+[8150] : D3 1C          	OUT	(PAD),A
+[8152] : CD AD 80       	CALL	WAIT
+[8155] : CD A3 80       	CALL	R010
+[8158] : 23             	INC	HL
+[8159] : 10 F1          	DJNZ	WRITE
+[815B] : C9             	RET
+                        ;----------------------------
+                        ; Move LCD Cursor (to Home)
+                        ;----------------------------
+[815C] : CD 99 80       CURSOR:	CALL	R000
+[815F] : CD 9E 80       	CALL	R001
+[8162] : 3E 80          	LD	A,80H
+[8164] : D3 1C          	OUT	(PAD),A
+[8166] : CD AD 80       	CALL	WAIT
+[8169] : CD 99 80       	CALL	R000
+[816C] : C9             	RET
+                        ;--------------------------------------
+                        ; Interrupt routines
+                        ;--------------------------------------
+[816D] : 37             INT0:	SCF
+[816E] : F3             	DI
+[816F] : ED 4D          	RETI
+                        ;
+[8171] : 14             INT1:	INC	D
+[8172] : 37             	SCF
+[8173] : 3F             	CCF
+[8174] : FB             	EI
+[8175] : ED 4D          	RETI
+                        ;--------------------------------------
+                        ; Defined Bytes
+                        ;--------------------------------------
+                        ;
+                        ;----------------------------
+                        ; LCD Initialize Commands
+                        ;----------------------------
+[8177] : 38             LCDINI:	DB	38H
+[8178] : 0C             	DB	0CH
+[8179] : 06             	DB	06H
+                        ;----------------------------
+                        ; Messages
+                        ;----------------------------
+[817A] : 30 2E 30 6D    LCD1:	DB	'0.0m≤ºﬁÆ≥0.5m–œ›'
+         B2 BC DE AE
+         B3 30 2E 35
+         6D D0 CF DD
+[818A] : 30 2E 35 6D    	DB	'0.5m≤ºﬁÆ≥1.0m–œ›'
+         B2 BC DE AE
+         B3 31 2E 30
+         6D D0 CF DD
+[819A] : 31 2E 30 6D    	DB	'1.0m≤ºﬁÆ≥1.5m–œ›'
+         B2 BC DE AE
+         B3 31 2E 35
+         6D D0 CF DD
+[81AA] : 31 2E 35 6D    	DB	'1.5m≤ºﬁÆ≥2.0m–œ›'
+         B2 BC DE AE
+         B3 32 2E 30
+         6D D0 CF DD
+[81BA] : 32 2E 30 6D    	DB	'2.0m≤ºﬁÆ≥2.5m–œ›'
+         B2 BC DE AE
+         B3 32 2E 35
+         6D D0 CF DD
+[81CA] : 32 2E 35 6D    	DB	'2.5m≤ºﬁÆ≥3.0m–œ›'
+         B2 BC DE AE
+         B3 33 2E 30
+         6D D0 CF DD
+[81DA] : 33 2E 30 6D    	DB	'3.0m≤ºﬁÆ≥3.5m–œ›'
+         B2 BC DE AE
+         B3 33 2E 35
+         6D D0 CF DD
+[81EA] : 33 2E 35 6D    	DB	'3.5m≤ºﬁÆ≥4.0m–œ›'
+         B2 BC DE AE
+         B3 34 2E 30
+         6D D0 CF DD
+[81FA] : 34 2E 30 6D    	DB	'4.0m≤ºﬁÆ≥4.5m–œ›'
+         B2 BC DE AE
+         B3 34 2E 35
+         6D D0 CF DD
+[820A] : 34 2E 35 6D    	DB	'4.5m≤ºﬁÆ≥5.0m–œ›'
+         B2 BC DE AE
+         B3 35 2E 30
+         6D D0 CF DD
+[821A] : 35 2E 30 6D    	DB	'5.0m≤ºﬁÆ≥       '
+         B2 BC DE AE
+         B3 20 20 20
+         20 20 20 20
+                        ;
+[822A] : 30 2E 30 6D    LCD2:	DB	'0.0m≤ºﬁÆ≥0.2m–œ›'
+         B2 BC DE AE
+         B3 30 2E 32
+         6D D0 CF DD
+[823A] : 30 2E 32 6D    	DB	'0.2m≤ºﬁÆ≥0.4m–œ›'
+         B2 BC DE AE
+         B3 30 2E 34
+         6D D0 CF DD
+[824A] : 30 2E 34 6D    	DB	'0.4m≤ºﬁÆ≥0.6m–œ›'
+         B2 BC DE AE
+         B3 30 2E 36
+         6D D0 CF DD
+[825A] : 30 2E 36 6D    	DB	'0.6m≤ºﬁÆ≥0.8m–œ›'
+         B2 BC DE AE
+         B3 30 2E 38
+         6D D0 CF DD
+[826A] : 30 2E 38 6D    	DB	'0.8m≤ºﬁÆ≥1.0m–œ›'
+         B2 BC DE AE
+         B3 31 2E 30
+         6D D0 CF DD
+[827A] : 31 2E 30 6D    	DB	'1.0m≤ºﬁÆ≥1.2m–œ›'
+         B2 BC DE AE
+         B3 31 2E 32
+         6D D0 CF DD
+[828A] : 31 2E 32 6D    	DB	'1.2m≤ºﬁÆ≥1.4m–œ›'
+         B2 BC DE AE
+         B3 31 2E 34
+         6D D0 CF DD
+[829A] : 31 2E 34 6D    	DB	'1.4m≤ºﬁÆ≥1.6m–œ›'
+         B2 BC DE AE
+         B3 31 2E 36
+         6D D0 CF DD
+[82AA] : 31 2E 36 6D    	DB	'1.6m≤ºﬁÆ≥1.8m–œ›'
+         B2 BC DE AE
+         B3 31 2E 38
+         6D D0 CF DD
+[82BA] : 31 2E 38 6D    	DB	'1.8m≤ºﬁÆ≥2.0m–œ›'
+         B2 BC DE AE
+         B3 32 2E 30
+         6D D0 CF DD
+[82CA] : 32 2E 30 6D    	DB	'2.0m≤ºﬁÆ≥2.2m–œ›'
+         B2 BC DE AE
+         B3 32 2E 32
+         6D D0 CF DD
+[82DA] : 32 2E 32 6D    	DB	'2.2m≤ºﬁÆ≥2.4m–œ›'
+         B2 BC DE AE
+         B3 32 2E 34
+         6D D0 CF DD
+[82EA] : 32 2E 34 6D    	DB	'2.4m≤ºﬁÆ≥2.6m–œ›'
+         B2 BC DE AE
+         B3 32 2E 36
+         6D D0 CF DD
+[82FA] : 32 2E 36 6D    	DB	'2.6m≤ºﬁÆ≥2.8m–œ›'
+         B2 BC DE AE
+         B3 32 2E 38
+         6D D0 CF DD
+[830A] : 32 2E 38 6D    	DB	'2.8m≤ºﬁÆ≥3.0m–œ›'
+         B2 BC DE AE
+         B3 33 2E 30
+         6D D0 CF DD
+[831A] : 33 2E 30 6D    	DB	'3.0m≤ºﬁÆ≥3.2m–œ›'
+         B2 BC DE AE
+         B3 33 2E 32
+         6D D0 CF DD
+[832A] : 33 2E 32 6D    	DB	'3.2m≤ºﬁÆ≥3.4m–œ›'
+         B2 BC DE AE
+         B3 33 2E 34
+         6D D0 CF DD
+[833A] : 33 2E 34 6D    	DB	'3.4m≤ºﬁÆ≥3.6m–œ›'
+         B2 BC DE AE
+         B3 33 2E 36
+         6D D0 CF DD
+[834A] : 33 2E 36 6D    	DB	'3.6m≤ºﬁÆ≥3.8m–œ›'
+         B2 BC DE AE
+         B3 33 2E 38
+         6D D0 CF DD
+[835A] : 33 2E 38 6D    	DB	'3.8m≤ºﬁÆ≥4.0m–œ›'
+         B2 BC DE AE
+         B3 34 2E 30
+         6D D0 CF DD
+[836A] : 34 2E 30 6D    	DB	'4.0m≤ºﬁÆ≥4.2m–œ›'
+         B2 BC DE AE
+         B3 34 2E 32
+         6D D0 CF DD
+[837A] : 34 2E 32 6D    	DB	'4.2m≤ºﬁÆ≥4.4m–œ›'
+         B2 BC DE AE
+         B3 34 2E 34
+         6D D0 CF DD
+[838A] : 34 2E 34 6D    	DB	'4.4m≤ºﬁÆ≥4.6m–œ›'
+         B2 BC DE AE
+         B3 34 2E 36
+         6D D0 CF DD
+[839A] : 34 2E 36 6D    	DB	'4.6m≤ºﬁÆ≥4.8m–œ›'
+         B2 BC DE AE
+         B3 34 2E 38
+         6D D0 CF DD
+[83AA] : 34 2E 38 6D    	DB	'4.8m≤ºﬁÆ≥5.0m–œ›'
+         B2 BC DE AE
+         B3 35 2E 30
+         6D D0 CF DD
+[83BA] : 35 2E 30 6D    	DB	'5.0m≤ºﬁÆ≥       '
+         B2 BC DE AE
+         B3 20 20 20
+         20 20 20 20
+                        ;
+                        	END
+                        ;[EOF]

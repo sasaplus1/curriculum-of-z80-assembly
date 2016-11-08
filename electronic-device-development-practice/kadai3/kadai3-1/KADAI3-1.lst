@@ -1,0 +1,116 @@
+[00F0] :                HALTMR	EQU	0F0H
+[00F1] :                HALTMCR	EQU	0F1H
+                        ;
+[001C] :                PAD	EQU	1CH
+[001D] :                PAC	EQU	1DH
+[001E] :                PBD	EQU	1EH
+[001F] :                PBC	EQU	1FH
+                        ;
+[8000] :                	ORG	8000H
+                        ;
+[8000] : 31 00 00       	LD	SP,00H
+[8003] : CD 6F 80       	CALL	WDTINI
+[8006] : CD 5E 80       	CALL	PIOINI
+                        ;--------------------------------------
+                        ; Main routine
+                        ;--------------------------------------
+[8009] : CD 36 80       LOOP:	CALL	LEFT
+[800C] : CD 7E 80       	CALL	WAIT
+[800F] : CD 7E 80       	CALL	WAIT
+[8012] : CD 46 80       	CALL	STOP
+                        ;
+[8015] : CD 91 80       	CALL	SLEEP
+                        ;
+[8018] : CD 3E 80       	CALL	RIGHT
+[801B] : CD 7E 80       	CALL	WAIT
+[801E] : CD 7E 80       	CALL	WAIT
+[8021] : CD 46 80       	CALL	STOP
+                        ;
+[8024] : CD 91 80       	CALL	SLEEP
+                        ;
+[8027] : CD 4E 80       	CALL	ARMUP
+[802A] : CD 91 80       	CALL	SLEEP
+[802D] : CD 56 80       	CALL	ARMSTP
+                        ;
+[8030] : CD 91 80       	CALL	SLEEP
+                        ;
+[8033] : C3 09 80       	JP	LOOP
+                        ;--------------------------------------
+                        ; Sub routines
+                        ;--------------------------------------
+                        ;
+                        ;----------------------------
+                        ; Curve
+                        ;----------------------------
+[8036] : 3E A5          LEFT:	LD	A,0A5H
+[8038] : D3 1C          	OUT	(PAD),A
+[803A] : CD 7E 80       	CALL	WAIT
+[803D] : C9             	RET
+                        ;
+[803E] : 3E 5A          RIGHT:	LD	A,5AH
+[8040] : D3 1C          	OUT	(PAD),A
+[8042] : CD 7E 80       	CALL	WAIT
+[8045] : C9             	RET
+                        ;----------------------------
+                        ; Motor
+                        ;----------------------------
+[8046] : 3E CC          STOP:	LD	A,0CCH
+[8048] : D3 1C          	OUT	(PAD),A
+[804A] : CD 7E 80       	CALL	WAIT
+[804D] : C9             	RET
+                        ;----------------------------
+                        ; Arm
+                        ;----------------------------
+[804E] : 3E FA          ARMUP:	LD	A,0FAH
+[8050] : D3 1E          	OUT	(PBD),A
+[8052] : CD 7E 80       	CALL	WAIT
+[8055] : C9             	RET
+                        ;
+[8056] : 3E FC          ARMSTP:	LD	A,0FCH
+[8058] : D3 1E          	OUT	(PBD),A
+[805A] : CD 7E 80       	CALL	WAIT
+[805D] : C9             	RET
+                        ;----------------------------
+                        ; Initialize
+                        ;----------------------------
+[805E] : 3E CF          PIOINI:	LD	A,0CFH
+[8060] : D3 1D          	OUT	(PAC),A
+[8062] : 3E 00          	LD	A,00H
+[8064] : D3 1D          	OUT	(PAC),A
+[8066] : 3E CF          	LD	A,0CFH
+[8068] : D3 1F          	OUT	(PBC),A
+[806A] : 3E 00          	LD	A,00H
+[806C] : D3 1F          	OUT	(PBC),A
+[806E] : C9             	RET
+                        ;
+[806F] : F3             WDTINI:	DI
+[8070] : 3E DB          	LD	A,0DBH
+[8072] : D3 F1          	OUT	(HALTMCR),A
+[8074] : 3E 7B          	LD	A,7BH
+[8076] : D3 F0          	OUT	(HALTMR),A
+[8078] : 3E B1          	LD	A,0B1H
+[807A] : D3 F1          	OUT	(HALTMCR),A
+[807C] : FB             	EI
+[807D] : C9             	RET
+                        ;----------------------------
+                        ; Wait
+                        ;----------------------------
+[807E] : 16 06          WAIT:	LD	D,06H
+[8080] : 06 FF          W0:	LD	B,0FFH
+[8082] : 0E FF          W1:	LD	C,0FFH
+[8084] : 0D             W2:	DEC	C
+[8085] : C2 84 80       	JP	NZ,W2
+[8088] : 05             	DEC	B
+[8089] : C2 82 80       	JP	NZ,W1
+[808C] : 15             	DEC	D
+[808D] : C2 80 80       	JP	NZ,W0
+[8090] : C9             	RET
+                        ;----------------------------
+[8091] : 1E 0B          SLEEP:	LD	E,0BH
+[8093] : CD 7E 80       SLEEP0:	CALL	WAIT
+[8096] : 1D             	DEC	E
+[8097] : C2 93 80       	JP	NZ,SLEEP0
+[809A] : C9             	RET
+                        ;
+                        	END
+                        ;[EOF]
